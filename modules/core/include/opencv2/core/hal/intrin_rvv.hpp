@@ -10,6 +10,15 @@
 
 #include <algorithm>
 
+// RVV intrinsics have been renamed in version 0.11, so we need to include
+// compatibility headers:
+// https://github.com/riscv-non-isa/rvv-intrinsic-doc/tree/master/auto-generated/rvv-v0p10-compatible-headers
+#if defined(__riscv_v_intrinsic) &&  __riscv_v_intrinsic>10999
+#include "intrin_rvv_010_compat_non-policy.hpp"
+#include "intrin_rvv_010_compat_overloaded-non-policy.hpp"
+#endif
+
+
 // Building for T-Head C906 core with RVV 0.7.1 using toolchain
 // https://github.com/T-head-Semi/xuantie-gnu-toolchain
 // with option '-march=rv64gcv0p7'
@@ -22,6 +31,8 @@
 
 namespace cv
 {
+
+//! @cond IGNORED
 
 CV_CPU_OPTIMIZATION_HAL_NAMESPACE_BEGIN
 
@@ -2862,17 +2873,17 @@ inline v_float32x4 v_pack_triplets(const v_float32x4& vec) { return vec; }
 ////// FP16 support ///////
 
 #if CV_FP16
-inline v_float32x4 v_load_expand(const float16_t* ptr)
+inline v_float32x4 v_load_expand(const hfloat* ptr)
 {
     return v_float32x4(vfwcvt_f_f_v_f32m1(vle16_v_f16mf2(ptr, 4), 4));
 }
 
-inline void v_pack_store(float16_t* ptr, const v_float32x4& v)
+inline void v_pack_store(hfloat* ptr, const v_float32x4& v)
 {
     vse16_v_f16mf2(ptr, vfncvt_f_f_w_f16mf2(v, 4), 4);
 }
 #else
-inline v_float32x4 v_load_expand(const float16_t* ptr)
+inline v_float32x4 v_load_expand(const hfloat* ptr)
 {
     const int N = 4;
     float buf[N];
@@ -2880,12 +2891,12 @@ inline v_float32x4 v_load_expand(const float16_t* ptr)
     return v_load(buf);
 }
 
-inline void v_pack_store(float16_t* ptr, const v_float32x4& v)
+inline void v_pack_store(hfloat* ptr, const v_float32x4& v)
 {
     const int N = 4;
     float buf[N];
     v_store(buf, v);
-    for( int i = 0; i < N; i++ ) ptr[i] = float16_t(buf[i]);
+    for( int i = 0; i < N; i++ ) ptr[i] = hfloat(buf[i]);
 }
 #endif
 
@@ -3327,7 +3338,8 @@ inline void v_cleanup() {}
 
 CV_CPU_OPTIMIZATION_HAL_NAMESPACE_END
 
+//! @endcond
 
-}
+} // namespace cv
 
 #endif
